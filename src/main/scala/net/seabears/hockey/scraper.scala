@@ -7,35 +7,26 @@ import net.ruippeixotog.scalascraper.dsl.DSL.Parse._
 import net.ruippeixotog.scalascraper.model.Element
 
 object Scraper {
-  private def isShorthanded(event: (String, String)): Boolean =
+  private type RawEvent = (String, String)
+
+  private[this] val eventFilters: List[(RawEvent => Boolean, (String, Boolean) => GameEvent)] =
+    List((eventFilter("goal scored"), GoalScored.apply),
+         (eventFilter("shot blocked"), ShotBlocked.apply),
+         (eventFilter("shot missed"), ShotMissed.apply),
+         (eventFilter("shot on goal"), ShotOnGoal.apply))
+
+  private def eventFilter(search: String)(event: RawEvent): Boolean =
+    event._2.toLowerCase.contains(search)
+
+  private def isShorthanded(event: RawEvent): Boolean =
     event._2.toLowerCase.startsWith("shorthanded")
 
-  private def isPowerPlay(event: (String, String)): Boolean =
+  private def isPowerPlay(event: RawEvent): Boolean =
     event._2.toLowerCase.startsWith("power play")
 
-  private def isShotMissed(event: (String, String)): Boolean =
-    event._2.toLowerCase.contains("shot missed")
-
-  private def isShotOnGoal(event: (String, String)): Boolean =
-    event._2.toLowerCase.contains("shot on goal")
-
-  private def isShotBlocked(event: (String, String)): Boolean =
-    event._2.toLowerCase.contains("shot blocked")
-
-  private def isGoalScored(event: (String, String)): Boolean =
-    event._2.toLowerCase.contains("goal scored")
-
-  private def toGameEvent(event: (String, String)): Option[GameEvent] = {
+  private def toGameEvent(event: RawEvent): Option[GameEvent] = {
     val evenStrength = !isPowerPlay(event) && !isShorthanded(event)
-    if (isShotMissed(event))
-      Some(ShotMissed(event._1, evenStrength))
-    else if (isShotBlocked(event))
-      Some(ShotBlocked(event._1, evenStrength))
-    else if (isShotOnGoal(event))
-      Some(ShotOnGoal(event._1, evenStrength))
-    else if (isGoalScored(event))
-      Some(GoalScored(event._1, evenStrength))
-    else None
+    (eventFilters filter (_._1(event)) map (_._2(event._1, evenStrength))).headOption
   }
 
   def main(args: Array[String]) {
@@ -43,14 +34,14 @@ object Scraper {
     //val doc = browser.get("http://example.com/")
     val doc = browser.parseFile(getClass.getResource("/playbyplay.html").getPath)
     val rows: List[Element] = doc >> elementList("div.mod-content table.mod-data tbody tr")
-    val events: List[(String, String)] = rows.map(_ >> elementList("td"))
+    val events: List[RawEvent] = rows.map(_ >> elementList("td"))
 	    .filter(_.size == 3)
 	    .map(tds => (tds(1).text, tds{2}.text))
 	    .filterNot(_._1.isEmpty)
 	    .filterNot(_._2.isEmpty)
 
-    val teams = events map (_._1) distinct
-    val game = new Game(teams.toSet)
+    val teams = events map (_._1)
+    val game = new Game(teams.distinct.toSet)
     events.map(toGameEvent).filterNot(_.isEmpty).map(_.get).foreach(game.put)
     println(game.score)
     game.teams foreach (team => {

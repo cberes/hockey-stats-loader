@@ -3,5 +3,6 @@ lazy val root = (project in file(".")).
     name := "hockey-stats-scraper",
     version := "1.0",
     scalaVersion := "2.11.8",
+    scalacOptions ++= Seq("-feature"),
     libraryDependencies += "net.ruippeixotog" %% "scala-scraper" % "1.0.0"
   )
