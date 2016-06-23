@@ -11,7 +11,7 @@ class Game(val teams: Set[String]) {
   private[this] var goals: Map[String, Int] = Map().withDefaultValue(0)
   private[this] var shots: Map[GameEvent, Map[Bucket, Int]] = Map().withDefaultValue(Map().withDefaultValue(0))
 
-  def score: Map[String, Int] = teams map (team => team -> goals(team)) toMap
+  def score: Map[String, Int] = (teams map (team => team -> goals(team))).toMap
 
   def fenwickClose(team: String): Int =
     shots(ShotOnGoal(team, true))(Close) + shots(ShotMissed(team, true))(Close)
