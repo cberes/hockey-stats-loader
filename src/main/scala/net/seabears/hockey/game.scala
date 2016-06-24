@@ -15,21 +15,39 @@ case class Behind(goals: Int) extends Bucket {
 
 class Game(val teams: Set[String]) {
   private[this] var goals: Map[String, Int] = Map().withDefaultValue(0)
-  private[this] var shots: Map[GameEvent, Map[Bucket, Int]] = Map().withDefaultValue(Map().withDefaultValue(0))
+  private[this] var shots: Map[Bucket, Map[GameEvent, Int]] = Map().withDefaultValue(Map().withDefaultValue(0))
 
   def score: Map[String, Int] = (teams map (team => team -> goals(team))).toMap
 
   def fenwick(bucket: Bucket)(team: String): Int =
-    shots(ShotOnGoal(team, true))(bucket) + shots(ShotMissed(team, true))(bucket)
+    shots(bucket)(ShotOnGoal(team, true)) + shots(bucket)(ShotMissed(team, true))
+
+  def fenwickAll(team: String): Map[Bucket, Int] =
+    shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true))))}
 
   def fenwickPct(bucket: Bucket)(team: String): Double =
     fenwick(bucket)(team) / (fenwick(bucket)(team) + fenwick(bucket)(getOtherTeam(team))).toDouble
 
+  def fenwickPctAll(team: String): Map[Bucket, Double] = {
+    val f0r = fenwickAll(team)
+    val against = fenwickAll(getOtherTeam(team))
+    shots.keySet.map(bucket => (bucket -> f0r(bucket) / (f0r(bucket) + against(bucket)).toDouble)).toMap
+  }
+
   def corsi(bucket: Bucket)(team: String): Int =
-    shots(ShotOnGoal(team, true))(bucket) + shots(ShotMissed(team, true))(bucket) + shots(ShotBlocked(getOtherTeam(team), true))(bucket.getFoil)
+    shots(bucket)(ShotOnGoal(team, true)) + shots(bucket)(ShotMissed(team, true)) + shots(bucket.getFoil)(ShotBlocked(getOtherTeam(team), true))
+
+  def corsiAll(team: String): Map[Bucket, Int] =
+    shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true)) + shots(bucket.getFoil)(ShotBlocked(getOtherTeam(team), true))))}
 
   def corsiPct(bucket: Bucket)(team: String): Double =
     corsi(bucket)(team) / (corsi(bucket)(team) + corsi(bucket)(getOtherTeam(team))).toDouble
+
+  def corsiPctAll(team: String): Map[Bucket, Double] = {
+    val f0r = corsiAll(team)
+    val against = corsiAll(getOtherTeam(team))
+    shots.keySet.map(bucket => (bucket -> f0r(bucket) / (f0r(bucket) + against(bucket)).toDouble)).toMap
+  }
 
   private def getOtherTeam(team: String): String = (teams - team).head
 
@@ -45,9 +63,9 @@ class Game(val teams: Set[String]) {
 
   private def putEvenStrengthShot(event: GameEvent) = {
     getBuckets(event.team) foreach (bucket => {
-      var teamShots: Map[Bucket, Int] = shots(event)
-      teamShots = teamShots updated (bucket, teamShots(bucket) + 1) 
-      shots = shots + (event -> teamShots)
+      var teamShots: Map[GameEvent, Int] = shots(bucket)
+      teamShots = teamShots updated (event, teamShots(event) + 1) 
+      shots = shots + (bucket -> teamShots)
     })
   }
 

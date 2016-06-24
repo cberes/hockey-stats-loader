@@ -48,8 +48,12 @@ object Scraper {
       println(team)
       println(game.corsi(Close)(team))
       println(game.corsiPct(Close)(team))
+      println(game.corsiAll(team))
+      println(game.corsiPctAll(team))
       println(game.fenwick(Close)(team))
       println(game.fenwickPct(Close)(team))
+      println(game.fenwickAll(team))
+      println(game.fenwickPctAll(team))
     })
   }
 }
