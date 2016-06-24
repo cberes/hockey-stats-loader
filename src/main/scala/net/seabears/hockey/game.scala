@@ -1,11 +1,17 @@
 package net.seabears.hockey
 
-trait Bucket
+trait Bucket {
+  def getFoil: Bucket = this
+}
 
 case object Close extends Bucket
 case object Even extends Bucket
-case class Ahead(goals: Int) extends Bucket
-case class Behind(goals: Int) extends Bucket
+case class Ahead(goals: Int) extends Bucket {
+  override def getFoil = Behind(goals)	
+}
+case class Behind(goals: Int) extends Bucket {
+  override def getFoil = Ahead(goals)
+}
 
 class Game(val teams: Set[String]) {
   private[this] var goals: Map[String, Int] = Map().withDefaultValue(0)
@@ -20,7 +26,7 @@ class Game(val teams: Set[String]) {
     fenwick(bucket)(team) / (fenwick(bucket)(team) + fenwick(bucket)(getOtherTeam(team))).toDouble
 
   def corsi(bucket: Bucket)(team: String): Int =
-    shots(ShotOnGoal(team, true))(bucket) + shots(ShotMissed(team, true))(bucket) + shots(ShotBlocked(getOtherTeam(team), true))(bucket)
+    shots(ShotOnGoal(team, true))(bucket) + shots(ShotMissed(team, true))(bucket) + shots(ShotBlocked(getOtherTeam(team), true))(bucket.getFoil)
 
   def corsiPct(bucket: Bucket)(team: String): Double =
     corsi(bucket)(team) / (corsi(bucket)(team) + corsi(bucket)(getOtherTeam(team))).toDouble
