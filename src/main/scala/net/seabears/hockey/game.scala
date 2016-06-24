@@ -13,11 +13,17 @@ class Game(val teams: Set[String]) {
 
   def score: Map[String, Int] = (teams map (team => team -> goals(team))).toMap
 
-  def fenwickClose(team: String): Int =
-    shots(ShotOnGoal(team, true))(Close) + shots(ShotMissed(team, true))(Close)
+  def fenwick(bucket: Bucket)(team: String): Int =
+    shots(ShotOnGoal(team, true))(bucket) + shots(ShotMissed(team, true))(bucket)
 
-  def corsiClose(team: String): Int =
-    shots(ShotOnGoal(team, true))(Close) + shots(ShotMissed(team, true))(Close) + shots(ShotBlocked(getOtherTeam(team), true))(Close)
+  def fenwickPct(bucket: Bucket)(team: String): Double =
+    fenwick(bucket)(team) / (fenwick(bucket)(team) + fenwick(bucket)(getOtherTeam(team))).toDouble
+
+  def corsi(bucket: Bucket)(team: String): Int =
+    shots(ShotOnGoal(team, true))(bucket) + shots(ShotMissed(team, true))(bucket) + shots(ShotBlocked(getOtherTeam(team), true))(bucket)
+
+  def corsiPct(bucket: Bucket)(team: String): Double =
+    corsi(bucket)(team) / (corsi(bucket)(team) + corsi(bucket)(getOtherTeam(team))).toDouble
 
   private def getOtherTeam(team: String): String = (teams - team).head
 

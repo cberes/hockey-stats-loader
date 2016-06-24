@@ -46,8 +46,10 @@ object Scraper {
     println(game.score)
     game.teams foreach (team => {
       println(team)
-      println(game.corsiClose(team))
-      println(game.fenwickClose(team))
+      println(game.corsi(Close)(team))
+      println(game.corsiPct(Close)(team))
+      println(game.fenwick(Close)(team))
+      println(game.fenwickPct(Close)(team))
     })
   }
 }
