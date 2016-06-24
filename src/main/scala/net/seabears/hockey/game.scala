@@ -2,10 +2,10 @@ package net.seabears.hockey
 
 trait Bucket
 
-case object Even extends Bucket
-case object Ahead extends Bucket
-case object Behind extends Bucket
 case object Close extends Bucket
+case object Even extends Bucket
+case class Ahead(goals: Int) extends Bucket
+case class Behind(goals: Int) extends Bucket
 
 class Game(val teams: Set[String]) {
   private[this] var goals: Map[String, Int] = Map().withDefaultValue(0)
@@ -49,12 +49,15 @@ class Game(val teams: Set[String]) {
     val thisScore: Int = goals(team)
     val otherScore: Int = goals(getOtherTeam(team))
     val diff: Int = thisScore - otherScore
+    val close: List[Bucket] = if (math.abs(diff) < 2) List(Close) else List()
+    List(getScoreBucket(diff)) ++ close
+  }
 
-    if (diff == 0)
-      List(Close, Even)
-    else if (math.abs(diff) == 1)
-      List(Close, if (diff > 0) Ahead else Behind)
-    else
-      List(if (diff > 0) Ahead else Behind)
+  private def getScoreBucket(diff: Int): Bucket = {
+    if (diff == 0) Even
+    else if (diff >= 3) Ahead(3)
+    else if (diff <= -3) Behind(3)
+    else if (diff > 0) Ahead(diff)
+    else Behind(math.abs(diff))
   }
 }
