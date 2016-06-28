@@ -1,5 +1,7 @@
 package net.seabears.hockey
 
+import java.io.File
+
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL._
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
@@ -7,6 +9,10 @@ import net.ruippeixotog.scalascraper.dsl.DSL.Parse._
 import net.ruippeixotog.scalascraper.model.Element
 
 object Scraper {
+  def apply(source: String) = new Scraper(source)
+}
+
+class Scraper(dir: String) {
   private type RawEvent = (String, String)
 
   private[this] val eventFilters: List[(RawEvent => Boolean, (String, Boolean) => GameEvent)] =
@@ -29,10 +35,17 @@ object Scraper {
     (eventFilters filter (_._1(event)) map (_._2(event._1, evenStrength))).headOption
   }
 
-  def main(args: Array[String]) {
+  def run() {
+    new File(dir).listFiles
+                 .filter(_.isFile)
+                 .filter(f => f.getName.endsWith(".html"))
+                 .map(_.getPath)
+                 .foreach(scrape)
+  }
+
+  private def scrape(file: String) {
     val browser = JsoupBrowser()
-    //val doc = browser.get("http://example.com/")
-    val doc = browser.parseFile(getClass.getResource("/playbyplay.html").getPath)
+    val doc = browser.parseFile(file)
     val rows: List[Element] = doc >> elementList("div.mod-content table.mod-data tbody tr")
     val events: List[RawEvent] = rows.map(_ >> elementList("td"))
 	    .filter(_.size == 3)
