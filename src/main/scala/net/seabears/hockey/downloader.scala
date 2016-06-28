@@ -1,5 +1,6 @@
 package net.seabears.hockey
 
+import scala.language.postfixOps
 import scala.sys.process._
 import java.io.File
 import java.net.URL
@@ -13,17 +14,17 @@ import net.ruippeixotog.scalascraper.dsl.DSL.Parse._
 import net.ruippeixotog.scalascraper.model.Element
 
 object Downloader {
-  def apply(host: String, destination: String, dateStart: String, dateEnd: String) =
-    new Downloader(host, destination, dates(dateStart, dateEnd))
+  def apply(destination: String, dateStart: String, dateEnd: String, host: String) =
+    new Downloader(destination, host, dates(dateStart, dateEnd))
 
   private def dates(dateStart: String, dateEnd: String): Seq[LocalDate] = {
     val start = LocalDate.parse(dateStart)
-    val days = Duration.between(start, LocalDate.parse(dateEnd)).toDays
+    val days = Duration.between(start, LocalDate.parse(dateEnd)).toDays.toInt
     for (dayIndex <- 0 to days) yield start.plusDays(dayIndex)
   }
 }
 
-class Downloader(host: String, destination: String, dates: Seq[LocalDate]) {
+class Downloader(destination: String, host: String, dates: Seq[LocalDate]) {
   private[this] val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
   def run() {
@@ -37,13 +38,14 @@ class Downloader(host: String, destination: String, dates: Seq[LocalDate]) {
   }
 
   private def getUrls(url: String): List[String] = {
-    val doc = browser.get(host + dayId)
+    val browser = JsoupBrowser()
+    val doc = browser.get(url)
     val links: List[Element] = doc >> elementList(".expand-gameLinks a")
     links.filter(e => e.text == "Play-By-Play").map(e => e.attr("href"))
   }
 
   private def download(url: String, dayId: String, index: Int) {
     val name = "playbyplay-" + dayId + "-" + index + ".html"
-    new Url(url) #> new File(destination, name) !
+    new URL(url) #> new File(destination, name) !
   }
 }
