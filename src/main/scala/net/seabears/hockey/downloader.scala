@@ -4,8 +4,9 @@ import scala.language.postfixOps
 import scala.sys.process._
 import java.io.File
 import java.net.URL
-import java.time.{Duration, LocalDate}
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL._
@@ -19,7 +20,7 @@ object Downloader {
 
   private def dates(dateStart: String, dateEnd: String): Seq[LocalDate] = {
     val start = LocalDate.parse(dateStart)
-    val days = Duration.between(start, LocalDate.parse(dateEnd)).toDays.toInt
+    val days = ChronoUnit.DAYS.between(start, LocalDate.parse(dateEnd)).toInt
     for (dayIndex <- 0 to days) yield start.plusDays(dayIndex)
   }
 }
@@ -38,14 +39,25 @@ class Downloader(destination: String, host: String, dates: Seq[LocalDate]) {
   }
 
   private def getUrls(url: String): List[String] = {
+    println("Searching for URLs at " + url)
     val browser = JsoupBrowser()
     val doc = browser.get(url)
     val links: List[Element] = doc >> elementList(".expand-gameLinks a")
-    links.filter(e => e.text == "Play-By-Play").map(e => e.attr("href"))
+    links.filter(e => e.text.matches("Play.By.Play"))
+         .map(e => e.attr("href"))
+         .map(_ + "&period=0")
+         .map(getFullUrl(url, _))
   }
+
+  private def getFullUrl(sourceUrl: String, path: String) =
+    if (path.startsWith("/")) {
+      val url = new URL(sourceUrl)
+      url.getProtocol + "://" + url.getHost + path
+    } else path
 
   private def download(url: String, dayId: String, index: Int) {
     val name = "playbyplay-" + dayId + "-" + index + ".html"
+    println("Downloading file to " + name)
     new URL(url) #> new File(destination, name) !
   }
 }
