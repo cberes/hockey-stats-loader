@@ -1,12 +1,14 @@
 package net.seabears.hockey
 
 import java.io.File
+import java.time.{LocalDate, LocalDateTime, LocalTime, ZoneId}
+import java.time.format.DateTimeFormatter
 
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL._
 import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL.Parse._
-import net.ruippeixotog.scalascraper.model.Element
+import net.ruippeixotog.scalascraper.model.{Document, Element}
 
 object Scraper {
   def apply(source: String) = new Scraper(source)
@@ -46,12 +48,9 @@ class Scraper(dir: String) {
   private def scrape(file: String) {
     val browser = JsoupBrowser()
     val doc = browser.parseFile(file)
-    val rows: List[Element] = doc >> elementList("div.mod-content table.mod-data tbody tr")
-    val events: List[RawEvent] = rows.map(_ >> elementList("td"))
-	    .filter(_.size == 3)
-	    .map(tds => (tds(1).text, tds{2}.text))
-	    .filterNot(_._1.isEmpty)
-	    .filterNot(_._2.isEmpty)
+    println(getTeams(doc))
+    println(getTime(doc))
+    val events = getEvents(doc)
 
     val teams = events map (_._1)
     val game = new Game(teams.distinct.toSet)
@@ -68,5 +67,30 @@ class Scraper(dir: String) {
       println(game.fenwickAll(team))
       println(game.fenwickPctAll(team))
     })
+  }
+
+  private def getTeams(doc: Document): (String, String) = {
+    val elem: String = doc >> text("title")
+    val teams = """^\s*(.+)\s+vs\.\s+(.+)\s+\S\s+Play.*$""".r
+    val teams(away, home) = elem
+    (home, away)
+  }
+
+  private def getTime(doc: Document) = {
+    val elem: String = doc >> text(".game-time-location p:first-child")
+    val gameTime = """^\s*(\d+:\d+\s+\w+)\s+(\w+)\s*,\s*(.+)\s*$""".r
+    val gameTime(rawTime, zone, rawDate) = elem
+    val date = LocalDate.parse(rawDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"))
+    val time = LocalTime.parse(rawTime, DateTimeFormatter.ofPattern("h:mm a"))
+    LocalDateTime.of(date, time)
+  }
+
+  private def getEvents(doc: Document): List[RawEvent] = {
+    val rows: List[Element] = doc >> elementList("div.mod-content table.mod-data tbody tr")
+    rows.map(_ >> elementList("td"))
+	.filter(_.size == 3)
+	.map(tds => (tds(1).text, tds{2}.text))
+	.filterNot(_._1.isEmpty)
+	.filterNot(_._2.isEmpty)
   }
 }
