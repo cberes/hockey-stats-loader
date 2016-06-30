@@ -1,18 +1,5 @@
 package net.seabears.hockey
 
-trait Bucket {
-  def getFoil: Bucket = this
-}
-
-case object Close extends Bucket
-case object Even extends Bucket
-case class Ahead(goals: Int) extends Bucket {
-  override def getFoil = Behind(goals)	
-}
-case class Behind(goals: Int) extends Bucket {
-  override def getFoil = Ahead(goals)
-}
-
 class Game(val teams: Set[String]) {
   private[this] var goals: Map[String, Int] = Map().withDefaultValue(0)
   private[this] var shots: Map[Bucket, Map[GameEvent, Int]] = Map().withDefaultValue(Map().withDefaultValue(0))
@@ -29,9 +16,9 @@ class Game(val teams: Set[String]) {
     fenwick(bucket)(team) / (fenwick(bucket)(team) + fenwick(bucket.getFoil)(getOtherTeam(team))).toDouble
 
   def fenwickPctAll(team: String): Map[Bucket, Double] = {
-    val f0r = fenwickAll(team)
-    val against = fenwickAll(getOtherTeam(team))
-    shots.keySet.map(bucket => (bucket -> f0r(bucket) / (f0r(bucket) + against(bucket.getFoil)).toDouble)).filterNot(_._2.isNaN).toMap
+    val fenwickFor = fenwickAll(team)
+    val fenwickAgainst = fenwickAll(getOtherTeam(team))
+    shots.keySet.map(bucket => (bucket -> fenwickFor(bucket) / (fenwickFor(bucket) + fenwickAgainst(bucket.getFoil)).toDouble)).filterNot(_._2.isNaN).toMap
   }
 
   def corsi(bucket: Bucket)(team: String): Int =
@@ -44,9 +31,9 @@ class Game(val teams: Set[String]) {
     corsi(bucket)(team) / (corsi(bucket)(team) + corsi(bucket.getFoil)(getOtherTeam(team))).toDouble
 
   def corsiPctAll(team: String): Map[Bucket, Double] = {
-    val f0r = corsiAll(team)
-    val against = corsiAll(getOtherTeam(team))
-    shots.keySet.map(bucket => (bucket -> f0r(bucket) / (f0r(bucket) + against(bucket.getFoil)).toDouble)).filterNot(_._2.isNaN).toMap
+    val corsiFor = corsiAll(team)
+    val corsiAgainst = corsiAll(getOtherTeam(team))
+    shots.keySet.map(bucket => (bucket -> corsiFor(bucket) / (corsiFor(bucket) + corsiAgainst(bucket.getFoil)).toDouble)).filterNot(_._2.isNaN).toMap
   }
 
   private def getOtherTeam(team: String): String = (teams - team).head
@@ -62,26 +49,12 @@ class Game(val teams: Set[String]) {
   private def putShot(event: GameEvent) = if (event.evenStrength) putEvenStrengthShot(event)
 
   private def putEvenStrengthShot(event: GameEvent) = {
-    getBuckets(event.team) foreach (bucket => {
+    val score: Int = goals(event.team)
+    val otherScore: Int = goals(getOtherTeam(event.team))
+    Bucket.getBuckets(score, otherScore) foreach (bucket => {
       var teamShots: Map[GameEvent, Int] = shots(bucket)
       teamShots = teamShots updated (event, teamShots(event) + 1) 
       shots = shots + (bucket -> teamShots)
     })
-  }
-
-  private def getBuckets(team: String): List[Bucket] = {
-    val thisScore: Int = goals(team)
-    val otherScore: Int = goals(getOtherTeam(team))
-    val diff: Int = thisScore - otherScore
-    val close: List[Bucket] = if (math.abs(diff) < 2) List(Close) else List()
-    List(getScoreBucket(diff)) ++ close
-  }
-
-  private def getScoreBucket(diff: Int): Bucket = {
-    if (diff == 0) Even
-    else if (diff >= 3) Ahead(3)
-    else if (diff <= -3) Behind(3)
-    else if (diff > 0) Ahead(diff)
-    else Behind(math.abs(diff))
   }
 }
