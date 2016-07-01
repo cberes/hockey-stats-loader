@@ -15,6 +15,6 @@ object App {
   }
 
   private def scrape(args: Array[String]) {
-    Scraper(args(0)).run
+    Loader(new Scraper(args(0)), new GameAdapter).run
   }
 }

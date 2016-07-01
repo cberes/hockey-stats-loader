@@ -10,10 +10,6 @@ import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL.Parse._
 import net.ruippeixotog.scalascraper.model.{Document, Element}
 
-object Scraper {
-  def apply(source: String) = new Scraper(source)
-}
-
 class Scraper(dir: String) {
   private type RawEvent = (String, String)
   private type TeamEvent = (Team, String)
@@ -27,7 +23,7 @@ class Scraper(dir: String) {
   private def eventFilter(search: String)(event: TeamEvent): Boolean =
     event._2.toLowerCase.contains(search)
 
-  def run(): Seq[Game] = {
+  def getGames(): Seq[Game] = {
     new File(dir).listFiles
                  .filter(_.isFile)
                  .filter(f => f.getName.endsWith(".html"))
@@ -43,24 +39,7 @@ class Scraper(dir: String) {
     val teamNames = getTeams(doc)
     val teams = (makeTeam(teamNames._1, teamLocations), makeTeam(teamNames._2, teamLocations))
     val game = new Game(teams._1, teams._2, getTime(doc))
-    events.map(toTeamEvent(Set(teams._1, teams._2)))
-          .map(toGameEvent)
-          .filterNot(_.isEmpty)
-          .map(_.get)
-          .foreach(game.put)
-    // TODO remove the printlns
-    println(game.score)
-    Set(game.home, game.away) foreach (team => {
-      println(team)
-      println(game.corsi(Close)(team))
-      println(game.corsiPct(Close)(team))
-      println(game.corsiAll(team))
-      println(game.corsiPctAll(team))
-      println(game.fenwick(Close)(team))
-      println(game.fenwickPct(Close)(team))
-      println(game.fenwickAll(team))
-      println(game.fenwickPctAll(team))
-    })
+    computeStats(events, game)
     game
   }
 
@@ -94,6 +73,14 @@ class Scraper(dir: String) {
     val date = LocalDate.parse(rawDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"))
     val time = LocalTime.parse(rawTime, DateTimeFormatter.ofPattern("h:mm a"))
     LocalDateTime.of(date, time)
+  }
+
+  private def computeStats(events: List[RawEvent], game: Game) {
+    events.map(toTeamEvent(Set(game.home, game.away)))
+          .map(toGameEvent)
+          .filterNot(_.isEmpty)
+          .map(_.get)
+          .foreach(game.put)
   }
 
   private def toTeamEvent(teams: Set[Team])(event: RawEvent): TeamEvent =
