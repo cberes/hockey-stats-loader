@@ -80,9 +80,12 @@ class Scraper(dir: String) {
     (home, away)
   }
 
-  // TODO this won't work for teams whose alias is not a substring of their whole name
+  // use longest token for cases where team's alias is not wholly contained in the team's name
   private def makeTeam(name: String, aliases: Set[String]): Team =
-    Team(name, aliases.filter(name.contains).head)
+    Team(name, aliases.filter(a => name.contains(getLongestToken(a))).head)
+
+  private def getLongestToken(text: String): String =
+    text.split("\\s+").maxBy(_.length)
 
   private def getTime(doc: Document) = {
     val elem: String = doc >> text(".game-time-location p:first-child")
