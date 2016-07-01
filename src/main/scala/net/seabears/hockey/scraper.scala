@@ -80,8 +80,9 @@ class Scraper(dir: String) {
     (home, away)
   }
 
-  private def makeTeam(name: String, locations: Set[String]): Team =
-    Team(name, locations.filter(name.contains).head)
+  // TODO this won't work for teams whose alias is not a substring of their whole name
+  private def makeTeam(name: String, aliases: Set[String]): Team =
+    Team(name, aliases.filter(name.contains).head)
 
   private def getTime(doc: Document) = {
     val elem: String = doc >> text(".game-time-location p:first-child")
@@ -93,7 +94,7 @@ class Scraper(dir: String) {
   }
 
   private def toTeamEvent(teams: Set[Team])(event: RawEvent): TeamEvent =
-    (teams.filter(_.location == event._1).head, event._2)
+    (teams.filter(_.alias == event._1).head, event._2)
 
   private def toGameEvent(event: TeamEvent): Option[GameEvent] = {
     val evenStrength = !isPowerPlay(event) && !isShorthanded(event)
