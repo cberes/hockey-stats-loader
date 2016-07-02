@@ -15,6 +15,7 @@ object App {
   }
 
   private def scrape(args: Array[String]) {
-    Loader(new Scraper(args(0)), new GameAdapter).run
+    val db = new Database
+    Loader(new Scraper(args(0)), new GameAdapter(_, db)).run
   }
 }

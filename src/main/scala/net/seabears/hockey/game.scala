@@ -7,6 +7,10 @@ class Game(val home: Team, val away: Team, val when: LocalDateTime) {
   private[this] var goals: Map[Team, Int] = Map().withDefaultValue(0)
   private[this] var shots: Map[Bucket, Map[GameEvent, Int]] = Map().withDefaultValue(Map().withDefaultValue(0))
 
+  def rawStats(team: Team): Map[Bucket, Map[String, Int]] = {
+    shots map {case (bucket, events) => (bucket, events.filterKeys(_.evenStrength).filterKeys(event => event.team == team).map{case (event, value) => (event.getClass.getSimpleName, value)})}
+  }
+
   def score: Map[Team, Int] = (teams map (team => team -> goals(team))).toMap
 
   def fenwick(bucket: Bucket)(team: Team): Int =
