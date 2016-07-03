@@ -7,12 +7,21 @@ class GameAdapter(val game: Game, db: Database) {
 
   private def findTeam(team: Team): Int = db.selectTeam(team)
 
-  def isDuplicate(): Boolean = false
+  // TODO new if FutureGame and no record exists OR PastGame and score does not exist
+  def isNew(): Boolean = true
 
-  def save() {
+  def save(): Unit = game match {
+    case futureGame: FutureGame => saveScheduledGame(futureGame)
+    case pastGame: PastGame => saveFinalGame(pastGame)
+  }
+
+  private def saveScheduledGame(game: Game) {
     gameId = db.insert(game)
-    // TODO do not insert result/stats for future games
-    // TODO what can I check on a game to know it has no stats?
+  }
+
+  private def saveFinalGame(game: PastGame) {
+    // TODO insert game only if base game record does not exist
+    saveScheduledGame(game)
     db.insert(gameId, game.score(game.home), game.score(game.away))
     teams.foreach(team => {
       game.corsiPctAll(team).foreach{case (bucket, value) => {

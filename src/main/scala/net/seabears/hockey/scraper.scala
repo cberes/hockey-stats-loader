@@ -38,7 +38,7 @@ class Scraper(dir: String) {
     val teamLocations = events.map(_._1).distinct.toSet
     val teamNames = getTeams(doc)
     val teams = (makeTeam(teamNames._1, teamLocations), makeTeam(teamNames._2, teamLocations))
-    val game = new Game(teams._1, teams._2, getTime(doc))
+    val game = new PastGame(teams._1, teams._2, getTime(doc))
     computeStats(events, game)
     game
   }
@@ -75,11 +75,11 @@ class Scraper(dir: String) {
     LocalDateTime.of(date, time)
   }
 
-  private def computeStats(events: List[RawEvent], game: Game) {
+  private def computeStats(events: List[RawEvent], game: PastGame) {
     val teams = Set(game.home, game.away)
     events.map(toTeamEvent(teams))
           .map(toGameEvent)
-          .filterNot(_.isEmpty)
+          .filter(_.isDefined)
           .map(_.get)
           .map(swapShotBlockedTeam(teams))
           .foreach(game.put)
