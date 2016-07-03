@@ -13,34 +13,31 @@ class Game(val home: Team, val away: Team, val when: LocalDateTime) {
 
   def score: Map[Team, Int] = (teams map (team => team -> goals(team))).toMap
 
-  def fenwick(bucket: Bucket)(team: Team): Int =
-    shots(bucket)(ShotOnGoal(team, true)) + shots(bucket)(ShotMissed(team, true))
+  def fenwick(bucket: Bucket)(team: Team): Int = fenwickAll(team)(bucket)
 
   def fenwickAll(team: Team): Map[Bucket, Int] =
     shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true))))}
 
-  def fenwickPct(bucket: Bucket)(team: Team): Double =
-    fenwick(bucket)(team) / (fenwick(bucket)(team) + fenwick(bucket.getFoil)(getOtherTeam(team))).toDouble
+  def fenwickPct(bucket: Bucket)(team: Team): Double = statPct(fenwick, bucket, team)
 
-  def fenwickPctAll(team: Team): Map[Bucket, Double] = {
-    val fenwickFor = fenwickAll(team)
-    val fenwickAgainst = fenwickAll(getOtherTeam(team))
-    shots.keySet.map(bucket => (bucket -> fenwickFor(bucket) / (fenwickFor(bucket) + fenwickAgainst(bucket.getFoil)).toDouble)).filterNot(_._2.isNaN).toMap
-  }
+  def fenwickPctAll(team: Team): Map[Bucket, Double] = statPctAll(fenwickAll, team)
 
-  def corsi(bucket: Bucket)(team: Team): Int =
-    shots(bucket)(ShotOnGoal(team, true)) + shots(bucket)(ShotMissed(team, true)) + shots(bucket)(ShotBlocked(team, true))
+  def corsi(bucket: Bucket)(team: Team): Int = corsiAll(team)(bucket)
 
   def corsiAll(team: Team): Map[Bucket, Int] =
     shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true)) + events(ShotBlocked(team, true))))}
 
-  def corsiPct(bucket: Bucket)(team: Team): Double =
-    corsi(bucket)(team) / (corsi(bucket)(team) + corsi(bucket.getFoil)(getOtherTeam(team))).toDouble
+  def corsiPct(bucket: Bucket)(team: Team): Double = statPct(corsi, bucket, team)
 
-  def corsiPctAll(team: Team): Map[Bucket, Double] = {
-    val corsiFor = corsiAll(team)
-    val corsiAgainst = corsiAll(getOtherTeam(team))
-    shots.keySet.map(bucket => (bucket -> corsiFor(bucket) / (corsiFor(bucket) + corsiAgainst(bucket.getFoil)).toDouble)).filterNot(_._2.isNaN).toMap
+  def corsiPctAll(team: Team): Map[Bucket, Double] = statPctAll(corsiAll, team)
+
+  private def statPct(func: Bucket => Team => Double, bucket: Bucket, team: Team): Double =
+    func(bucket)(team) / (func(bucket)(team) + func(bucket.getFoil)(getOtherTeam(team))).toDouble
+
+  private def statPctAll(func: Team => Map[Bucket, Int], team: Team): Map[Bucket, Double] = {
+    val statFor = func(team)
+    val statAgainst = func(getOtherTeam(team))
+    shots.keySet.map(bucket => (bucket -> statFor(bucket) / (statFor(bucket) + statAgainst(bucket.getFoil)).toDouble)).filterNot(_._2.isNaN).toMap
   }
 
   private def getOtherTeam(team: Team): Team = (teams - team).head
