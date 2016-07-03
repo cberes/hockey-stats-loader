@@ -3,12 +3,14 @@ package net.seabears.hockey
 class GameAdapter(val game: Game, db: Database) {
   val homeTeamId: Int = findTeam(game.home)
   val awayTeamId: Int = findTeam(game.away)
-  var gameId: Int = 0
+  var gameId: Option[Int] = db.selectGame(game)
 
   private def findTeam(team: Team): Int = db.selectTeam(team)
 
-  // TODO new if FutureGame and no record exists OR PastGame and score does not exist
-  def isNew(): Boolean = true
+  def isNew(): Boolean = gameId match {
+    case Some(id) => game.isInstanceOf[PastGame] && db.selectScore(id).isEmpty
+    case None => true
+  }
 
   def save(): Unit = game match {
     case futureGame: FutureGame => saveScheduledGame(futureGame)
@@ -16,23 +18,22 @@ class GameAdapter(val game: Game, db: Database) {
   }
 
   private def saveScheduledGame(game: Game) {
-    gameId = db.insert(game)
+    gameId = Some(db.insert(game))
   }
 
   private def saveFinalGame(game: PastGame) {
-    // TODO insert game only if base game record does not exist
-    saveScheduledGame(game)
-    db.insert(gameId, game.score(game.home), game.score(game.away))
+    if (gameId.isEmpty) saveScheduledGame(game)
+    db.insert(gameId.get, game.score(game.home), game.score(game.away))
     teams.foreach(team => {
       game.corsiPctAll(team).foreach{case (bucket, value) => {
-        db.insert(gameId, findTeam(team), db.selectStat("Corsi", bucket), value)
+        db.insert(gameId.get, findTeam(team), db.selectStat("Corsi", bucket), value)
       }}
       game.fenwickPctAll(team).foreach{case (bucket, value) => {
-        db.insert(gameId, findTeam(team), db.selectStat("Fenwick", bucket), value)
+        db.insert(gameId.get, findTeam(team), db.selectStat("Fenwick", bucket), value)
       }}
       game.rawStats(team).foreach{case (bucket, stats) => {
         stats.foreach{case (stat, value) => {
-          db.insert(gameId, findTeam(team), db.selectStat(stat, bucket), value)
+          db.insert(gameId.get, findTeam(team), db.selectStat(stat, bucket), value)
         }}
       }}
     })
