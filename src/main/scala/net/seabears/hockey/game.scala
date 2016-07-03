@@ -29,10 +29,10 @@ class Game(val home: Team, val away: Team, val when: LocalDateTime) {
   }
 
   def corsi(bucket: Bucket)(team: Team): Int =
-    shots(bucket)(ShotOnGoal(team, true)) + shots(bucket)(ShotMissed(team, true)) + shots(bucket.getFoil)(ShotBlocked(getOtherTeam(team), true))
+    shots(bucket)(ShotOnGoal(team, true)) + shots(bucket)(ShotMissed(team, true)) + shots(bucket)(ShotBlocked(team, true))
 
   def corsiAll(team: Team): Map[Bucket, Int] =
-    shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true)) + shots(bucket.getFoil)(ShotBlocked(getOtherTeam(team), true))))}
+    shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true)) + events(ShotBlocked(team, true))))}
 
   def corsiPct(bucket: Bucket)(team: Team): Double =
     corsi(bucket)(team) / (corsi(bucket)(team) + corsi(bucket.getFoil)(getOtherTeam(team))).toDouble

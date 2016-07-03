@@ -23,9 +23,6 @@ class GameAdapter(val game: Game, db: Database) {
       }}
       game.rawStats(team).foreach{case (bucket, stats) => {
         stats.foreach{case (stat, value) => {
-          // TODO shots blocked are shots blocked by the specified team
-          // (they left the sticks of the opposing team)
-          // we would need the shots blocked by the other team and for the bucket's foil
           db.insert(gameId, findTeam(team), db.selectStat(stat, bucket), value)
         }}
       }}
