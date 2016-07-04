@@ -15,7 +15,7 @@ object App {
   }
 
   private def scrape(args: Array[String]) {
-    val db = new Database
+    val db = new MemoizedDatabase(NoopDatabase)
     Loader(new Scraper(args(0)), new GameAdapter(_, db)).run
   }
 }
