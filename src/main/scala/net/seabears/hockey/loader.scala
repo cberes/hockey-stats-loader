@@ -18,6 +18,7 @@ class Loader(scraper: Scraper, adapterFactory: Game => GameAdapter) {
   }
 
   private def print(game: PastGame) {
+    println(game.scheduled)
     println(game.score)
     Set(game.home, game.away) foreach (team => {
       println(team)

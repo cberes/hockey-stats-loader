@@ -1,7 +1,7 @@
 package net.seabears.hockey
 
 import java.io.File
-import java.time.{LocalDate, LocalDateTime, LocalTime, ZoneId}
+import java.time.{LocalDate, LocalTime, ZonedDateTime, ZoneId}
 import java.time.format.DateTimeFormatter
 
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
@@ -69,10 +69,14 @@ class Scraper(dir: String) {
   private def getTime(doc: Document) = {
     val elem: String = doc >> text(".game-time-location p:first-child")
     val gameTime = """^\s*(\d+:\d+\s+\w+)\s+(\w+)\s*,\s*(.+)\s*$""".r
-    val gameTime(rawTime, zone, rawDate) = elem
+    val gameTime(rawTime, rawZone, rawDate) = elem
     val date = LocalDate.parse(rawDate, DateTimeFormatter.ofPattern("MMMM d, yyyy"))
     val time = LocalTime.parse(rawTime, DateTimeFormatter.ofPattern("h:mm a"))
-    LocalDateTime.of(date, time)
+    val zone = ZoneId.of(rawZone match {
+      case "ET" => "America/New_York"
+      case unknown => unknown
+    })
+    ZonedDateTime.of(date, time, zone)
   }
 
   private def computeStats(events: List[RawEvent], game: PastGame) {

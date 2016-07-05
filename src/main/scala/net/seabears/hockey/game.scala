@@ -1,16 +1,16 @@
 package net.seabears.hockey
 
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
 sealed abstract class Game {
   val home: Team
   val away: Team
-  val scheduled: LocalDateTime
+  val scheduled: ZonedDateTime
 }
 
-case class FutureGame(home: Team, away: Team, scheduled: LocalDateTime) extends Game
+case class FutureGame(home: Team, away: Team, scheduled: ZonedDateTime) extends Game
 
-case class PastGame(home: Team, away: Team, scheduled: LocalDateTime) extends Game {
+case class PastGame(home: Team, away: Team, scheduled: ZonedDateTime) extends Game {
   private[this] val teams: Set[Team] = Set(home, away)
   private[this] var goals: Map[Team, Int] = Map().withDefaultValue(0)
   private[this] var shots: Map[Bucket, Map[GameEvent, Int]] = Map().withDefaultValue(Map().withDefaultValue(0))
