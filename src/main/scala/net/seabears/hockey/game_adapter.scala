@@ -3,7 +3,7 @@ package net.seabears.hockey
 class GameAdapter(val game: Game, db: Database) {
   val homeTeamId: Int = findTeam(game.home)
   val awayTeamId: Int = findTeam(game.away)
-  var gameId: Option[Int] = db.selectGame(game)
+  var gameId: Option[Long] = db.selectGame(game)
 
   private def findTeam(team: Team): Int = db.selectTeam(team).get
 
@@ -18,7 +18,7 @@ class GameAdapter(val game: Game, db: Database) {
   }
 
   private def saveScheduledGame(game: Game) {
-    gameId = Some(db.insert(game))
+    gameId = Some(db.insert(game, homeTeamId, awayTeamId))
   }
 
   private def saveFinalGame(game: PastGame) {

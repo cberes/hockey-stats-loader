@@ -4,5 +4,9 @@ lazy val root = (project in file(".")).
     version := "1.0",
     scalaVersion := "2.11.8",
     scalacOptions ++= Seq("-feature"),
-    libraryDependencies += "net.ruippeixotog" %% "scala-scraper" % "1.0.0"
+    libraryDependencies ++= Seq(
+      "net.ruippeixotog" %% "scala-scraper" % "1.0.0",
+      "org.postgresql" % "postgresql" % "9.4.1208",
+      "com.typesafe.play" %% "anorm" % "2.5.0"
+    )
   )
