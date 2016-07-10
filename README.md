@@ -19,8 +19,5 @@
 
 #### Setup
 
-    \list
-    CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
-    \dx
-    \dt
+    See [the file](src/main/sql/hockey_stats.sql)
 
