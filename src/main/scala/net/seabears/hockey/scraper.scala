@@ -10,6 +10,8 @@ import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL.Parse._
 import net.ruippeixotog.scalascraper.model.{Document, Element}
 
+import net.seabears.hockey.core._
+
 class Scraper(dir: String) {
   private type RawEvent = (String, String)
   private type TeamEvent = (Team, String)

@@ -1,4 +1,6 @@
-package net.seabears.hockey
+package net.seabears.hockey.db
+
+import net.seabears.hockey.core._
 
 abstract class Database {
   def insert(game: Game, homeId: Int, awayId: Int): Long

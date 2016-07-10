@@ -1,4 +1,4 @@
-package net.seabears.hockey
+package net.seabears.hockey.core
 
 import java.time.ZonedDateTime
 

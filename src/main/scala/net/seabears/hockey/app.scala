@@ -1,5 +1,7 @@
 package net.seabears.hockey
 
+import net.seabears.hockey.db._
+
 object App {
   def main(args: Array[String]) {
     if (args.head == "download")

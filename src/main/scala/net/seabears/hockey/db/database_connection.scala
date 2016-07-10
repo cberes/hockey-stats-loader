@@ -1,4 +1,4 @@
-package net.seabears.hockey
+package net.seabears.hockey.db
 
 import java.sql.DriverManager
 import java.sql.Connection
@@ -7,13 +7,8 @@ import java.sql.Connection
  * Adapted from http://bwbecker.github.io/blog/2015/05/05/accessing-anorm-without-play/
  * which was also "adapted" from Play
  */
-object DB {
-  private[this] val host = "TODO"
-  private[this] val port = 5432
-  private[this] val name = "TODO"
-  private[this] val url = s"jdbc:postgresql://$host:$port/$name"
-  private[this] val user = "TODO"
-  private[this] val password = "TODO"
+class DatabaseConnection(config: DatabaseConfig) {
+  private[this] val url = s"jdbc:postgresql://${config.host}:${config.port}/${config.name}"
 
   Class.forName("org.postgresql.Driver").newInstance
 
@@ -27,8 +22,8 @@ object DB {
    */
   def getConnection(): Connection = {
     var props = new java.util.Properties();
-    props.setProperty("user", user);
-    props.setProperty("password", password);
+    props.setProperty("user", config.username);
+    props.setProperty("password", config.password);
 
     DriverManager.getConnection(url, props)
   }

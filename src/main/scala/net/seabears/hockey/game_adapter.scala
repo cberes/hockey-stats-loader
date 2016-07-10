@@ -1,5 +1,8 @@
 package net.seabears.hockey
 
+import net.seabears.hockey.core._
+import net.seabears.hockey.db.Database
+
 class GameAdapter(val game: Game, db: Database) {
   val homeTeamId: Int = findTeam(game.home)
   val awayTeamId: Int = findTeam(game.away)

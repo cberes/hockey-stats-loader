@@ -1,4 +1,7 @@
-package net.seabears.hockey
+package net.seabears.hockey.db
+
+import net.seabears.hockey.core._
+import net.seabears.hockey.memo._
 
 class MemoizedDatabase(db: Database) extends Database {
   def insert(game: Game, homeId: Int, awayId: Int): Long = db.insert(game, homeId, awayId)

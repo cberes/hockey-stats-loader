@@ -1,4 +1,6 @@
-package net.seabears.hockey
+package net.seabears.hockey.db
+
+import net.seabears.hockey.core._
 
 object NoopDatabase extends Database {
   def insert(game: Game, homeId: Int, awayId: Int): Long = 0

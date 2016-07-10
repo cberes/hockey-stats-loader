@@ -1,4 +1,4 @@
-package net.seabears.hockey
+package net.seabears.hockey.core
 
 sealed abstract class GameEvent {
   val team: Team

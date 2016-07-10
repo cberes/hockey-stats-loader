@@ -1,4 +1,4 @@
-package net.seabears.hockey
+package net.seabears.hockey.core
 
 object Bucket {
   def getBuckets(score: Int, otherScore: Int): List[Bucket] = {

@@ -1,4 +1,4 @@
-package net.seabears.hockey
+package net.seabears.hockey.memo
 
 object Memoize {
   def apply[T, R](f: T => Option[R]) = new MemoizeOpt(f)

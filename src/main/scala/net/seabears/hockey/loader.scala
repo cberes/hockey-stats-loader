@@ -1,5 +1,7 @@
 package net.seabears.hockey
 
+import net.seabears.hockey.core._
+
 object Loader {
   def apply(scraper: Scraper, adapterFactory: Game => GameAdapter) =
     new Loader(scraper, adapterFactory)
