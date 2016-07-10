@@ -1,6 +1,6 @@
 lazy val root = (project in file(".")).
   settings(
-    name := "hockey-stats-scraper",
+    name := "hockey-stats-loader",
     version := "1.0",
     scalaVersion := "2.11.8",
     scalacOptions ++= Seq("-feature"),
