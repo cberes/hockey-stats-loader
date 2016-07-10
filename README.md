@@ -19,5 +19,6 @@
 
 #### Setup
 
-    See [the file](src/main/sql/hockey_stats.sql)
+0. Run the [schema file](src/main/sql/hockey_stats.sql)
+0. Add your teams and their aliases
 
