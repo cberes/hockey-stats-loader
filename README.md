@@ -1,5 +1,7 @@
 # Hockey stats loader
 
+Scrapes hockey stats from HTML markup
+
 ## Notes
 
 ### Postgres Docker container
