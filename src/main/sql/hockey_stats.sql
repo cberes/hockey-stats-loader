@@ -95,3 +95,28 @@ INSERT INTO public.stat (name, description) VALUES
 ('Fenwick%Behind(2)', 'Fenwick for % - behind 2'),
 ('Fenwick%Behind(3)', 'Fenwick for % - behind 3+');
 
+CREATE FUNCTION adjust_for_score(in TEXT, in BIGINT, in BIGINT, out value DOUBLE PRECISION)
+    AS $$ SELECT (( 3.75 * (COALESCE(s_a2.value, 0.0) - 0.440) +
+              8.46 * (COALESCE(s_a1.value, 0.0) - 0.461) +
+             17.94 * (COALESCE(s_ev.value, 0.0) - 0.500) +
+              8.46 * (COALESCE(s_b1.value, 0.0) - 0.539) +
+              3.75 * (COALESCE(s_b2.value, 0.0) - 0.560)
+            ) / 42.36
+           ) + 0.5
+    FROM stat ev --ON ev.name = (CAST($1 AS TEXT) || 'Even')
+    LEFT OUTER JOIN game_stat s_ev on s_ev.stat_id = ev._id
+      AND s_ev.game_id = $2 AND s_ev.team_id = $3
+    JOIN stat a1 ON a1.name = (CAST($1 AS TEXT) || 'Ahead(1)')
+    LEFT OUTER JOIN game_stat s_a1 on s_a1.stat_id = ev._id
+      AND s_a1.game_id = $2 AND s_a1.team_id = $3
+    JOIN stat a2 ON a2.name = (CAST($1 AS TEXT) || 'Ahead(2)')
+    LEFT OUTER JOIN game_stat s_a2 on s_a2.stat_id = ev._id
+      AND s_a2.game_id = $2 AND s_a2.team_id = $3
+    JOIN stat b1 ON b1.name = (CAST($1 AS TEXT) || 'Behind(1)')
+    LEFT OUTER JOIN game_stat s_b1 on s_b1.stat_id = ev._id
+      AND s_b1.game_id = $2 AND s_b1.team_id = $3
+    JOIN stat b2 ON b2.name = (CAST($1 AS TEXT) || 'Behind(2)')
+    LEFT OUTER JOIN game_stat s_b2 on s_b2.stat_id = ev._id
+      AND s_b2.game_id = $2 AND s_b2.team_id = $3
+    WHERE ev.name = (CAST($1 AS TEXT) || 'Even')
+  $$ LANGUAGE SQL;
