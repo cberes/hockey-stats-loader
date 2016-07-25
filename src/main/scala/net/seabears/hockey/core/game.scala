@@ -24,7 +24,7 @@ case class PastGame(home: Team, away: Team, scheduled: ZonedDateTime) extends Ga
   def fenwick(bucket: Bucket)(team: Team): Int = fenwickAll(team)(bucket)
 
   def fenwickAll(team: Team): Map[Bucket, Int] =
-    shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true))))}
+    shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true))))} withDefaultValue(0)
 
   def fenwickPct(bucket: Bucket)(team: Team): Double = statPct(fenwick, bucket, team)
 
@@ -33,7 +33,7 @@ case class PastGame(home: Team, away: Team, scheduled: ZonedDateTime) extends Ga
   def corsi(bucket: Bucket)(team: Team): Int = corsiAll(team)(bucket)
 
   def corsiAll(team: Team): Map[Bucket, Int] =
-    shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true)) + events(ShotBlocked(team, true))))}
+    shots map {case (bucket, events) => (bucket -> (events(ShotOnGoal(team, true)) + events(ShotMissed(team, true)) + events(ShotBlocked(team, true))))} withDefaultValue(0)
 
   def corsiPct(bucket: Bucket)(team: Team): Double = statPct(corsi, bucket, team)
 
