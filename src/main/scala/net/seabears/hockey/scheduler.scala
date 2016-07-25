@@ -38,8 +38,8 @@ class Scheduler(adapterFactory: Game => GameAdapter, host: String, dates: Seq[Lo
   }
 
   private def toGame(date: LocalDate)(element: Element): FutureGame = {
-    val away = element.select("table.game-header-table tr:nth-child(2) td.team-name").head.text
-    val home = element.select("table.game-header-table tr:nth-child(4) td.team-name").head.text
+    val away = element.select("table.game-header-table tr:nth-child(1) td.team-name").head.text
+    val home = element.select("table.game-header-table tr:nth-child(3) td.team-name").head.text
     val time = element.select("ul.game-info li:nth-child(2) span:first-child").head.text
     FutureGame(Team("", home), Team("", away), parseTime(date, time))
   }
