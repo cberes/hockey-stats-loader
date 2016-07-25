@@ -6,7 +6,6 @@ import java.io.File
 import java.net.URL
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 
 import net.ruippeixotog.scalascraper.browser.JsoupBrowser
 import net.ruippeixotog.scalascraper.dsl.DSL._
@@ -14,15 +13,11 @@ import net.ruippeixotog.scalascraper.dsl.DSL.Extract._
 import net.ruippeixotog.scalascraper.dsl.DSL.Parse._
 import net.ruippeixotog.scalascraper.model.Element
 
+import net.seabears.hockey.util.DateUtils
+
 object Downloader {
   def apply(destination: String, dateStart: String, dateEnd: String, host: String) =
-    new Downloader(destination, host, dates(dateStart, dateEnd))
-
-  private def dates(dateStart: String, dateEnd: String): Seq[LocalDate] = {
-    val start = LocalDate.parse(dateStart)
-    val days = ChronoUnit.DAYS.between(start, LocalDate.parse(dateEnd)).toInt
-    for (dayIndex <- 0 to days) yield start.plusDays(dayIndex)
-  }
+    new Downloader(destination, host, DateUtils.dates(dateStart, dateEnd))
 }
 
 class Downloader(destination: String, host: String, dates: Seq[LocalDate]) {
