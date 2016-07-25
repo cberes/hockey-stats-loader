@@ -16,6 +16,16 @@ Alternatively, parse HTML containing scheduled games:
 
     sbt run schedule 2016-06-01 2016-06-01 http://example.com/games?date=
 
+## Configuration
+
+The following environment variables need to be set:
+
+0. `HOCKEY_DB_NAME` (database name)
+0. `HOCKEY_DB_HOST` (database host)
+0. `HOCKEY_DB_PORT` (database port)
+0. `HOCKEY_DB_USERNAME` (database username)
+0. `HOCKEY_DB_PASSWORD` (database password)
+
 ## Notes
 
 ### Postgres Docker container
