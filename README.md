@@ -2,6 +2,20 @@
 
 Scrapes hockey stats from HTML markup
 
+## Usage
+
+First, download files containing raw stats to parse (in HTML):
+
+    sbt run download /path/to/save/files 2016-06-01 2016-06-01 http://example.com/games?date=
+
+Then parse the stats files in the same directory:
+
+    sbt run scrape /path/to/read/files
+
+Alternatively, parse HTML containing scheduled games:
+
+    sbt run schedule 2016-06-01 2016-06-01 http://example.com/games?date=
+
 ## Notes
 
 ### Postgres Docker container
