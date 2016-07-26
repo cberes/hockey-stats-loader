@@ -16,11 +16,11 @@ import net.ruippeixotog.scalascraper.model.Element
 import net.seabears.hockey.util.DateUtils
 
 object Downloader {
-  def apply(destination: String, dateStart: String, dateEnd: String, host: String)(implicit userAgentFactory: () => String) =
-    new Downloader(destination, host, DateUtils.dates(dateStart, dateEnd), userAgentFactory)
+  def apply(destination: String, dateStart: String, dateEnd: String, host: String)(implicit userAgentFactory: () => String, pauseFactory: () => Unit) =
+    new Downloader(destination, host, DateUtils.dates(dateStart, dateEnd), userAgentFactory, pauseFactory)
 }
 
-class Downloader(destination: String, host: String, dates: Seq[LocalDate], userAgentFactory: () => String) {
+class Downloader(destination: String, host: String, dates: Seq[LocalDate], userAgentFactory: () => String, pauseFactory: () => Unit) {
   private[this] val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
   private[this] val userAgent = userAgentFactory()
   private[this] val browser = new JsoupBrowser(userAgent)
@@ -32,7 +32,8 @@ class Downloader(destination: String, host: String, dates: Seq[LocalDate], userA
   def run(date: LocalDate) {
     val dayId = date.format(formatter)
     val urls: List[String] = getUrls(host + dayId)
-    urls.zipWithIndex.map(url => download(url._1, dayId, url._2))
+    urls.zipWithIndex.foreach(url => download(url._1, dayId, url._2))
+    pauseFactory()
   }
 
   private def getUrls(url: String): List[String] = {
@@ -59,5 +60,6 @@ class Downloader(destination: String, host: String, dates: Seq[LocalDate], userA
     val output = new FileOutputStream(new File(destination, name))
     val channel = Channels.newChannel(connection.getInputStream())
     output.getChannel().transferFrom(channel, 0, Long.MaxValue)
+    pauseFactory()
   }
 }

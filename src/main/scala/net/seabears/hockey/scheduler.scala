@@ -13,11 +13,11 @@ import net.seabears.hockey.core._
 import net.seabears.hockey.util.DateUtils
 
 object Scheduler {
-  def apply(adapterFactory: Game => GameAdapter, dateStart: String, dateEnd: String, host: String)(implicit userAgentFactory: () => String) =
-    new Scheduler(adapterFactory, host, DateUtils.dates(dateStart, dateEnd), userAgentFactory)
+  def apply(adapterFactory: Game => GameAdapter, dateStart: String, dateEnd: String, host: String)(implicit userAgentFactory: () => String, pauseFactory: () => Unit) =
+    new Scheduler(adapterFactory, host, DateUtils.dates(dateStart, dateEnd), userAgentFactory, pauseFactory)
 }
 
-class Scheduler(adapterFactory: Game => GameAdapter, host: String, dates: Seq[LocalDate], userAgentFactory: () => String) {
+class Scheduler(adapterFactory: Game => GameAdapter, host: String, dates: Seq[LocalDate], userAgentFactory: () => String, pauseFactory: () => Unit) {
   private[this] val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
   private[this] val browser = new JsoupBrowser(userAgentFactory())
 
@@ -38,6 +38,7 @@ class Scheduler(adapterFactory: Game => GameAdapter, host: String, dates: Seq[Lo
   }
 
   private def toGame(date: LocalDate)(element: Element): FutureGame = {
+    pauseFactory()
     val away = element.select("table.game-header-table tr:nth-child(1) td.team-name").head.text
     val home = element.select("table.game-header-table tr:nth-child(3) td.team-name").head.text
     val time = element.select("ul.game-info li:nth-child(2) span:first-child").head.text

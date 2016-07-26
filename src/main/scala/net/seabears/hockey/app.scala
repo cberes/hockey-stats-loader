@@ -1,9 +1,11 @@
 package net.seabears.hockey
 
 import net.seabears.hockey.db._
+import net.seabears.hockey.util.PauseFactory
 import net.seabears.hockey.util.UserAgentFactory
 
 object App {
+  implicit def pauseFactory: () => Unit = new PauseFactory(5, 15)
   implicit def userAgentFactory: () => String = new UserAgentFactory()
 
   def main(args: Array[String]) {
