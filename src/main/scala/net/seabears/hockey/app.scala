@@ -1,8 +1,11 @@
 package net.seabears.hockey
 
 import net.seabears.hockey.db._
+import net.seabears.hockey.util.UserAgentFactory
 
 object App {
+  implicit def userAgentFactory: () => String = new UserAgentFactory()
+
   def main(args: Array[String]) {
     if (args.head == "download")
       download(args.tail)

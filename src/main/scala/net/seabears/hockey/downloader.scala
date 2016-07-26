@@ -1,9 +1,9 @@
 package net.seabears.hockey
 
-import scala.language.postfixOps
-import scala.sys.process._
 import java.io.File
+import java.io.FileOutputStream
 import java.net.URL
+import java.nio.channels.Channels
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -16,12 +16,14 @@ import net.ruippeixotog.scalascraper.model.Element
 import net.seabears.hockey.util.DateUtils
 
 object Downloader {
-  def apply(destination: String, dateStart: String, dateEnd: String, host: String) =
-    new Downloader(destination, host, DateUtils.dates(dateStart, dateEnd))
+  def apply(destination: String, dateStart: String, dateEnd: String, host: String)(implicit userAgentFactory: () => String) =
+    new Downloader(destination, host, DateUtils.dates(dateStart, dateEnd), userAgentFactory)
 }
 
-class Downloader(destination: String, host: String, dates: Seq[LocalDate]) {
+class Downloader(destination: String, host: String, dates: Seq[LocalDate], userAgentFactory: () => String) {
   private[this] val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+  private[this] val userAgent = userAgentFactory()
+  private[this] val browser = new JsoupBrowser(userAgent)
 
   def run() {
     dates.foreach(run)
@@ -35,7 +37,6 @@ class Downloader(destination: String, host: String, dates: Seq[LocalDate]) {
 
   private def getUrls(url: String): List[String] = {
     println("Searching for URLs at " + url)
-    val browser = JsoupBrowser()
     val doc = browser.get(url)
     val links: List[Element] = doc >> elementList(".expand-gameLinks a")
     links.filter(e => e.text.matches("Play.By.Play"))
@@ -51,8 +52,12 @@ class Downloader(destination: String, host: String, dates: Seq[LocalDate]) {
     } else path
 
   private def download(url: String, dayId: String, index: Int) {
+    val connection = new URL(url).openConnection()
+    connection.setRequestProperty("User-Agent", userAgent)
     val name = "playbyplay-" + dayId + "-" + index + ".html"
     println("Downloading file to " + name)
-    new URL(url) #> new File(destination, name) !
+    val output = new FileOutputStream(new File(destination, name))
+    val channel = Channels.newChannel(connection.getInputStream())
+    output.getChannel().transferFrom(channel, 0, Long.MaxValue)
   }
 }

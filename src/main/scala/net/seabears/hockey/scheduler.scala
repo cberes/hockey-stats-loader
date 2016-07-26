@@ -13,12 +13,13 @@ import net.seabears.hockey.core._
 import net.seabears.hockey.util.DateUtils
 
 object Scheduler {
-  def apply(adapterFactory: Game => GameAdapter, dateStart: String, dateEnd: String, host: String) =
-    new Scheduler(adapterFactory, host, DateUtils.dates(dateStart, dateEnd))
+  def apply(adapterFactory: Game => GameAdapter, dateStart: String, dateEnd: String, host: String)(implicit userAgentFactory: () => String) =
+    new Scheduler(adapterFactory, host, DateUtils.dates(dateStart, dateEnd), userAgentFactory)
 }
 
-class Scheduler(adapterFactory: Game => GameAdapter, host: String, dates: Seq[LocalDate]) {
+class Scheduler(adapterFactory: Game => GameAdapter, host: String, dates: Seq[LocalDate], userAgentFactory: () => String) {
   private[this] val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+  private[this] val browser = new JsoupBrowser(userAgentFactory())
 
   def run() {
     dates.flatMap(getGames)
@@ -31,7 +32,6 @@ class Scheduler(adapterFactory: Game => GameAdapter, host: String, dates: Seq[Lo
     val dayId = date.format(formatter)
     val url = host + dayId
     println("Searching for games at " + url)
-    val browser = JsoupBrowser()
     val doc = browser.get(url)
     val tables: List[Element] = doc >> elementList("div.game-header")
     tables.map(toGame(date))
