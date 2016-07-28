@@ -84,7 +84,6 @@ class Scraper(dir: String) {
           .map(toGameEvent)
           .filter(_.isDefined)
           .map(_.get)
-          .map(swapShotBlockedTeam(teams))
           .foreach(game.put)
   }
 
@@ -101,9 +100,4 @@ class Scraper(dir: String) {
 
   private def isPowerPlay(event: TeamEvent): Boolean =
     event._2.toLowerCase.startsWith("power play")
-
-  private def swapShotBlockedTeam(teams: Set[Team])(event: GameEvent) = event match {
-    case ShotBlocked(team, evenStrength) => ShotBlocked((teams - team).head, evenStrength)
-    case other => other
-  }
 }
