@@ -9,14 +9,14 @@ object Loader {
 
 class Loader(scraper: Scraper, adapterFactory: Game => GameAdapter) {
   def run() {
-    scraper.getGames.map{
+    val games = scraper.getGames
+    games.map{
       case game: PastGame => Some(game)
       case _ => None
     }.foreach(_.map(print))
-    scraper.getGames
-           .map(adapterFactory)
-           .filter(_.isNew)
-           .foreach(_.save)
+    games.map(adapterFactory)
+         .filter(_.isNew)
+         .foreach(_.save)
   }
 
   private def print(game: PastGame) {

@@ -4,15 +4,19 @@ import net.seabears.hockey.core._
 import net.seabears.hockey.db.Database
 
 class GameAdapter(val game: Game, db: Database) {
+  println("Initializing adapter for " + game)
   val homeTeamId: Int = findTeam(game.home)
   val awayTeamId: Int = findTeam(game.away)
   var gameId: Option[Long] = db.selectGame(game)
 
   private def findTeam(team: Team): Int = db.selectTeam(team).get
 
-  def isNew(): Boolean = gameId match {
-    case Some(id) => game.isInstanceOf[PastGame] && db.selectScore(id).isEmpty
-    case None => true
+  def isNew(): Boolean = {
+    println("Searching for " + game)
+    gameId match {
+      case Some(id) => game.isInstanceOf[PastGame] && db.selectScore(id).isEmpty
+      case None => true
+    }
   }
 
   def save(): Unit = game match {
@@ -25,6 +29,7 @@ class GameAdapter(val game: Game, db: Database) {
   }
 
   private def saveFinalGame(game: PastGame) {
+    println("Saving game " + game)
     if (gameId.isEmpty) saveScheduledGame(game)
     db.insert(gameId.get, game.score(game.home), game.score(game.away))
     teams.foreach(team => {

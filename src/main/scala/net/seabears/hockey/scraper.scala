@@ -32,18 +32,22 @@ class Scraper(dir: String) {
                  .filter(f => f.getName.endsWith(".html"))
                  .map(_.getPath)
                  .map(scrape)
+                 .filter(_.isDefined)
+                 .map(_.get)
   }
 
-  private def scrape(file: String): Game = {
+  private def scrape(file: String): Option[Game] = {
+    println("Scraping in " + file)
     val browser = JsoupBrowser()
     val doc = browser.parseFile(file)
     val events = getEvents(doc)
+    if (events.isEmpty) return None
     val teamLocations = events.map(_._1).distinct.toSet
     val teamNames = getTeams(doc)
     val teams = (makeTeam(teamNames._1, teamLocations), makeTeam(teamNames._2, teamLocations))
     val game = new PastGame(teams._1, teams._2, getTime(doc))
     computeStats(events, game)
-    game
+    Some(game)
   }
 
   private def getEvents(doc: Document): List[RawEvent] = {
