@@ -95,7 +95,8 @@ INSERT INTO public.stat (name, description) VALUES
 ('Fenwick%Behind(2)', 'Fenwick for % - behind 2'),
 ('Fenwick%Behind(3)', 'Fenwick for % - behind 3+');
 
-CREATE FUNCTION adjust_for_score(in TEXT, in BIGINT, in INT, out value DOUBLE PRECISION)
+CREATE OR REPLACE FUNCTION
+    adjust_for_score(in TEXT, in BIGINT, in INT, out value DOUBLE PRECISION)
     AS $$ SELECT (( 3.75 * (COALESCE(s_a2.value, 0.0) - 0.440) +
               8.46 * (COALESCE(s_a1.value, 0.0) - 0.461) +
              17.94 * (COALESCE(s_ev.value, 0.0) - 0.500) +
@@ -119,23 +120,21 @@ CREATE FUNCTION adjust_for_score(in TEXT, in BIGINT, in INT, out value DOUBLE PR
     LEFT OUTER JOIN game_stat s_b2 on s_b2.stat_id = ev._id
       AND s_b2.game_id = $2 AND s_b2.team_id = $3
     WHERE ev.name = (CAST($1 AS TEXT) || 'Even')
-    $$ LANGUAGE SQL;
+    $$ LANGUAGE SQL STABLE;
 
-CREATE FUNCTION avg_stat(in TEXT, in INT, in TIMESTAMP, in TIMESTAMP, out value DOUBLE PRECISION)
-    AS $$ SELECT avg(adjust_for_score($1, g._id, t._id))
-    FROM team t
-    JOIN game g ON g.home_team_id = t._id OR g.away_team_id = t._id
+CREATE OR REPLACE FUNCTION
+    avg_stat(in TEXT, in INT, in TIMESTAMP, in TIMESTAMP, out value DOUBLE PRECISION)
+    AS $$ SELECT avg(adjust_for_score($1, g._id, $2))
+    FROM game g
     JOIN game_result r ON r.game_id = g._id
-    WHERE t._id = $2 AND g.scheduled >= $3 AND g.scheduled < $4
-    $$ LANGUAGE SQL;
+    WHERE (g.home_team_id = $2 OR g.away_team_id = $2) AND g.scheduled >= $3 AND g.scheduled < $4
+    $$ LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE VIEW predictions AS
     SELECT g._id as game_id
-          ,CAST(5.3 * avg_stat('Corsi%', h._id, g.scheduled - interval '2 months', g.scheduled) AS INT) AS home_score
-          ,CAST(5.3 * avg_stat('Corsi%', a._id, g.scheduled - interval '2 months', g.scheduled) AS INT) AS away_score
-    FROM game g
-    JOIN team h ON g.home_team_id = h._id
-    JOIN team a ON g.away_team_id = a._id;
+          ,CAST(5.3 * avg_stat('Corsi%', g.home_team_id, g.scheduled - interval '2 months', g.scheduled) AS INT) AS home_score
+          ,CAST(5.3 * avg_stat('Corsi%', g.away_team_id, g.scheduled - interval '2 months', g.scheduled) AS INT) AS away_score
+    FROM game g;
 
 -- training data
 SELECT avg_stat('Corsi%', g.home_team_id, g.scheduled - interval '2 months', g.scheduled) as home_stat

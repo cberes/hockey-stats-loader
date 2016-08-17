@@ -8,7 +8,7 @@ import java.sql.Connection
  * which was also "adapted" from Play
  */
 class DatabaseConnection(config: DatabaseConfig) {
-  private[this] val url = s"jdbc:postgresql://${config.host}:${config.port}/${config.name}"
+  private[this] val url = s"jdbc:postgresql://${config.host}:${config.port}/${config.name}?user=${config.username}&password=${config.password}"
 
   Class.forName("org.postgresql.Driver").newInstance
 
@@ -21,11 +21,7 @@ class DatabaseConnection(config: DatabaseConfig) {
    * @throws an error if the required data source is not registered
    */
   def getConnection(): Connection = {
-    var props = new java.util.Properties();
-    props.setProperty("user", config.username);
-    props.setProperty("password", config.password);
-
-    DriverManager.getConnection(url, props)
+    DriverManager.getConnection(url + "&ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory")
   }
 
   /**
