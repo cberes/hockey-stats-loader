@@ -145,21 +145,3 @@ LEFT OUTER JOIN game_stat s_b1 ON s_b1.stat_id = b1._id AND s_b1.game_id = g._id
 LEFT OUTER JOIN game_stat s_b2 ON s_b2.stat_id = b2._id AND s_b2.game_id = g._id AND s_b2.team_id = t._id
 group by gg._id, t._id;
 
--- training data
-SELECT 
- r.home_score as home_score
-,d1.corsi_rel as home_corsi_rel
-,r.away_score as away_score
-,d2.corsi_rel as away_corsi_rel
-FROM game g
-JOIN game_result r ON r.game_id = g._id
-JOIN past_corsi_rel d1 ON g._id = d1.game_id AND g.home_team_id = d1.team_id
-JOIN past_corsi_rel d2 ON g._id = d2.game_id AND g.away_team_id = d2.team_id
-LIMIT 10000;
-
-CREATE OR REPLACE VIEW predictions AS
-SELECT g._id as game_id
-      ,CAST(5.3 * avg_stat('Corsi%', g.home_team_id, g.scheduled - interval '2 months', g.scheduled) AS INT) AS home_score
-      ,CAST(5.3 * avg_stat('Corsi%', g.away_team_id, g.scheduled - interval '2 months', g.scheduled) AS INT) AS away_score
-FROM game g;
-
