@@ -120,14 +120,14 @@ group by g._id, t._id, s_ev.value, s_a1.value, s_a2.value, s_b1.value, s_b2.valu
 
 -- Past SA Corsi% by game and team
 CREATE OR REPLACE VIEW past_corsi_rel AS
-SELECT gg._id as game_id, t._id as team_id, avg(
+SELECT gg._id AS game_id, t._id AS team_id, avg(
 (( 3.75 * (COALESCE(s_a2.value, 0.0) - 0.440) +
    8.46 * (COALESCE(s_a1.value, 0.0) - 0.461) +
   17.94 * (COALESCE(s_ev.value, 0.0) - 0.500) +
    8.46 * (COALESCE(s_b1.value, 0.0) - 0.539) +
    3.75 * (COALESCE(s_b2.value, 0.0) - 0.560)
   ) / 42.36
-) + 0.5) as corsi_rel
+) + 0.5) AS corsi_rel
 FROM game gg
 JOIN team t ON gg.home_team_id = t._id OR gg.away_team_id = t._id
 JOIN stat ev ON ev.name = 'Corsi%Even'
@@ -135,13 +135,19 @@ JOIN stat a1 ON a1.name = 'Corsi%Ahead(1)'
 JOIN stat a2 ON a2.name = 'Corsi%Ahead(2)'
 JOIN stat b1 ON b1.name = 'Corsi%Behind(1)'
 JOIN stat b2 ON b2.name = 'Corsi%Behind(2)'
-JOIN game g ON (g.home_team_id = t._id OR g.away_team_id = t._id)
-    AND g.scheduled >= gg.scheduled - interval '2 months' AND g.scheduled < gg.scheduled
+JOIN (SELECT g._id AS game_id, t._id AS team_id,
+gg._id AS prior_game_id,
+dense_rank() OVER (PARTITION BY g._id, t._id ORDER BY gg.scheduled desc) AS games_prior
+FROM game g
+JOIN team t ON g.home_team_id = t._id OR g.away_team_id = t._id
+JOIN game gg ON (gg.home_team_id = t._id OR gg.away_team_id = t._id) AND gg.scheduled < g.scheduled
+GROUP BY g._id, t._id, gg._id) b ON gg._id = b.game_id AND t._id = b.team_id
+JOIN game g ON g._id = b.prior_game_id AND b.games_prior <= 20
 JOIN game_result r ON r.game_id = g._id
 LEFT OUTER JOIN game_stat s_ev ON s_ev.stat_id = ev._id AND s_ev.game_id = g._id AND s_ev.team_id = t._id
 LEFT OUTER JOIN game_stat s_a1 ON s_a1.stat_id = a1._id AND s_a1.game_id = g._id AND s_a1.team_id = t._id
 LEFT OUTER JOIN game_stat s_a2 ON s_a2.stat_id = a2._id AND s_a2.game_id = g._id AND s_a2.team_id = t._id
 LEFT OUTER JOIN game_stat s_b1 ON s_b1.stat_id = b1._id AND s_b1.game_id = g._id AND s_b1.team_id = t._id
 LEFT OUTER JOIN game_stat s_b2 ON s_b2.stat_id = b2._id AND s_b2.game_id = g._id AND s_b2.team_id = t._id
-group by gg._id, t._id;
+GROUP BY gg._id, t._id;
 
